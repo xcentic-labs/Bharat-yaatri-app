@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "357908492900",
+    "project_id": "cabproj-3b7c7",
+    "storage_bucket": "cabproj-3b7c7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:357908492900:android:ee419743f69656e6ade571",
+        "android_client_info": {
+          "package_name": "com.xcentic.bhy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD2VPbxOVj-s7yGhYuOlFXNSHtqGEZiquA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,2 @@
+C:/XCENTIC Project/cabproject/android/app/.cxx/RelWithDebInfo/f4pd85v1/x86_64/CMakeFiles/edit_cache.dir
+C:/XCENTIC Project/cabproject/android/app/.cxx/RelWithDebInfo/f4pd85v1/x86_64/CMakeFiles/rebuild_cache.dir

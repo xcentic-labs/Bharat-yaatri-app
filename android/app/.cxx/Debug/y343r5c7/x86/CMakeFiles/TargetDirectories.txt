@@ -1,0 +1,2 @@
+C:/XCENTIC Project/cabproject/android/app/.cxx/Debug/y343r5c7/x86/CMakeFiles/edit_cache.dir
+C:/XCENTIC Project/cabproject/android/app/.cxx/Debug/y343r5c7/x86/CMakeFiles/rebuild_cache.dir

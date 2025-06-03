@@ -1,0 +1,4 @@
+-keep class com.yourpackage.** { *; }
+-keep class io.flutter.plugins.** { *; }
+-keep class flutter.overlay.window.** { *; }
+-keep class com.xcentic.bhy.** { *; }
