@@ -24,6 +24,26 @@ class _AddDutyScreenState extends State<AddDutyScreen> {
   TimeOfDay? _selectedTime;
   String? _rideType = "One Way";
   String? _carrierType = "";
+  String? _userId;
+
+  @override
+  void initState() {
+    super.initState();
+    _getUserId();
+  }
+
+  Future<void> _getUserId() async {
+    try {
+      final storedUserId = await _secureStorage.read(key: 'userId');
+      setState(() {
+        _userId = storedUserId;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error fetching user ID: $e")),
+      );
+    }
+  }
 
   Future<String?> _getUserIdFromSecureStorage() async {
     return await _secureStorage.read(key: "userId");
@@ -83,7 +103,7 @@ class _AddDutyScreenState extends State<AddDutyScreen> {
       return;
     }
 
-    // Create the JSON payload
+    // Create the JSON payload (original, working structure)
     final pickupDateTime =
         "${_selectedDate!.day}-${_selectedDate!.month}-${_selectedDate!.year}, ${_selectedTime!.hour}:${_selectedTime!.minute.toString().padLeft(2, '0')}";
     final Map<String, dynamic> rideData = {
@@ -99,6 +119,9 @@ class _AddDutyScreenState extends State<AddDutyScreen> {
       "createdBy": userId,
       "carrier": _carrierType
     };
+
+    print('userId: ' + userId.toString());
+    print('rideData: ' + jsonEncode(rideData));
 
     const String url = "https://api.bharatyaatri.com/api/ride/addride";
 
@@ -126,10 +149,9 @@ class _AddDutyScreenState extends State<AddDutyScreen> {
           _rideType = "One-Way";
         });
         Navigator.pop(context, true);
-        ;
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to submit ride: ${response.body}")),
+          SnackBar(content: Text("Failed to submit ride: \n${response.body}")),
         );
       }
     } catch (e) {
@@ -173,7 +195,7 @@ class _AddDutyScreenState extends State<AddDutyScreen> {
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFFE96E03),
+                color: Color(0xFF002D4C),
               ),
             ),
             const SizedBox(height: 8),
@@ -193,7 +215,7 @@ class _AddDutyScreenState extends State<AddDutyScreen> {
           style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Color(0xFFE96E03)),
+              color: Color(0xFF002D4C)),
         ),
         const SizedBox(height: 10),
         Row(
@@ -253,7 +275,7 @@ class _AddDutyScreenState extends State<AddDutyScreen> {
           style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Color(0xFFE96E03)),
+              color: Color(0xFF002D4C)),
         ),
         const SizedBox(height: 10),
         Row(
@@ -323,12 +345,12 @@ class _AddDutyScreenState extends State<AddDutyScreen> {
         title: const Text(
           "Add Duty",
           style: TextStyle(
-            color: Color(0xFFE96E03),
+            color: Color(0xFF002D4C),
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
-        iconTheme: const IconThemeData(color: Color(0xFFE96E03)),
+        iconTheme: const IconThemeData(color: Color(0xFF002D4C)),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -372,7 +394,7 @@ class _AddDutyScreenState extends State<AddDutyScreen> {
                 ),
               ),
               const SizedBox(height: 15),
-              _buildCarModelSelector(), // Replaced with dropdown
+              _buildCarModelSelector(),
               const SizedBox(height: 15),
               _buildCarrierTypeButtons(),
               const SizedBox(height: 15),
@@ -545,7 +567,7 @@ class _AddDutyScreenState extends State<AddDutyScreen> {
               ElevatedButton(
                 onPressed: _submitRide,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFE96E03),
+                  backgroundColor: const Color(0xFF002D4C),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),

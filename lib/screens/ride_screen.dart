@@ -7,8 +7,25 @@ import 'package:flutter/material.dart';
 import 'fragments/duty_fragment.dart';
 import 'fragments/exchange_fragment.dart';
 import 'filter_modal.dart';
+import 'package:cabproject/screens/agent_account_page.dart';
+import 'package:cabproject/screens/rider_account_page.dart';
 
 class RideScreen extends StatefulWidget {
+  final String name;
+  final String currentCity;
+  final String profileImageUrl;
+  final String userType;
+  final bool isAlertOn;
+
+  const RideScreen({
+    Key? key,
+    required this.name,
+    required this.currentCity,
+    required this.profileImageUrl,
+    required this.userType,
+    required this.isAlertOn,
+  }) : super(key: key);
+
   @override
   _RideScreenState createState() => _RideScreenState();
 }
@@ -29,6 +46,31 @@ class _RideScreenState extends State<RideScreen> {
   void dispose() {
     _pageController.dispose();
     super.dispose();
+  }
+
+  // Helper function for navigation to account page (re-implemented from old BottomNav)
+  void _navigateToAccountPage() {
+    print(widget.userType);
+    if (widget.userType == 'RIDER') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => AccountPage()),
+      );
+    } else if (widget.userType == 'AGENT') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => AgentAccountPage()),
+      );
+    } else if (widget.userType == 'ADMIN') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => AgentAccountPage()),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Invalid user type')),
+      );
+    }
   }
 
   Widget _buildGradientButton({
@@ -147,9 +189,88 @@ class _RideScreenState extends State<RideScreen> {
 
     return Scaffold(
       backgroundColor: Color(0xFFF5F5EE),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(72), // Height for the custom AppBar
+        child: AppBar(
+          automaticallyImplyLeading: false,
+          elevation: 0,
+          backgroundColor: Color(0xFFF5F5EE),
+          flexibleSpace: Container(
+            margin: const EdgeInsets.only(top: 35),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Row(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: GestureDetector(
+                          onTap: () {
+                            _navigateToAccountPage();
+                          },
+                          child: CircleAvatar(
+                            radius: 24,
+                            backgroundImage: widget.profileImageUrl.startsWith('assets/')
+                                ? AssetImage(widget.profileImageUrl) as ImageProvider
+                                : NetworkImage("https://api.bharatyaatri.com/" + widget.profileImageUrl),
+                          ),
+                        ),
+                      ),
+                      Flexible(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Hey ${widget.name}!",
+                              style: const TextStyle(
+                                  fontSize: 18, color: Colors.black),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Row(
+                              children: [
+                                const Icon(Icons.circle,
+                                    color: Color(0xFFE96E03), size: 10),
+                                Flexible(
+                                  child: Text(
+                                    " ${widget.currentCity}",
+                                    style: const TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.black),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(right: 16.0),
+                  child: Row(
+                    children: [
+                      Icon(
+                        widget.isAlertOn
+                            ? Icons.notifications_active
+                            : Icons.notifications_off,
+                        color: const Color(0xFFE96E03),
+                        size: 30,
+                      ),
+                      // The actual switch is handled in BottomNav, this is just visual
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
       body: Column(
         children: [
-          // My Leads and Location buttons
           // My Leads and Location buttons
           Container(
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
@@ -160,7 +281,6 @@ class _RideScreenState extends State<RideScreen> {
                 _buildCustomButton(
                   text: "My Rides",
                   onPressed: () {
-                    // Navigate to My Leads Page
                     Navigator.push(context,
                         MaterialPageRoute(builder: (context) => MyRidesPage()));
                   },
@@ -227,7 +347,6 @@ class _RideScreenState extends State<RideScreen> {
                       const SizedBox(height: 5),
                       ElevatedButton(
                         onPressed: () {
-                          // Handle Start Membership button press
                           Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -246,97 +365,60 @@ class _RideScreenState extends State<RideScreen> {
                     ],
                   ),
                 ),
-                // Right Image Sectio
               ],
             ),
           ),
-
-          // Rides and Agents buttons
-          Container(
-            padding: const EdgeInsets.only(bottom: 5, left: 10, right: 10),
-            color: Color(0xFFF5F5EE),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildGradientButton(
-                  text: "Duty",
-                  isSelected: _currentFragment == 0,
-                  onPressed: () {
-                    setState(() {
-                      _currentFragment = 0;
-                    });
-                    _pageController.animateToPage(
-                      0,
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOut,
-                    );
-                  },
-                ),
-                const SizedBox(width: 8),
-                _buildGradientButton(
-                  text: "Exchange",
-                  isSelected: _currentFragment == 1,
-                  onPressed: () {
-                    setState(() {
-                      _currentFragment = 1;
-                    });
-                    _pageController.animateToPage(
-                      1,
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOut,
-                    );
-                  },
-                ),
-                const SizedBox(width: 8),
-                _buildGradientButton(
-                  text: "Available",
-                  isSelected: _currentFragment == 2,
-                  onPressed: () {
-                    setState(() {
-                      _currentFragment = 2;
-                    });
-                    _pageController.animateToPage(
-                      2,
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOut,
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-
-          // Fragment content
+          // PageView for fragments
           Expanded(
-            child: PageView.builder(
+            child: PageView(
               controller: _pageController,
               onPageChanged: (index) {
                 setState(() {
                   _currentFragment = index;
                 });
               },
-              itemCount: 3, // Update itemCount to 3 since we have 3 fragments
-              itemBuilder: (context, index) {
-                return AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 500),
-                  transitionBuilder: (child, animation) {
-                    return ScaleTransition(
-                      scale: animation,
-                      child: FadeTransition(
-                        opacity: animation,
-                        child: child,
-                      ),
-                    );
+              children: <Widget>[
+                DutyFragment(key: _dutyFragmentKey),
+                ExchangeFragment(key: _exchangeFragmentKey),
+                AvailableFragment(key: _availableFragmentKey), // AgentsFragment
+              ],
+            ),
+          ),
+          // Bottom navigation for fragments
+          Container(
+            color: Color(0xFFF5F5EE),
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildGradientButton(
+                  text: "Rides",
+                  isSelected: _currentFragment == 0,
+                  onPressed: () {
+                    _pageController.animateToPage(0,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.ease);
                   },
-                  child: index == 0
-                      ? DutyFragment(key: _dutyFragmentKey)
-                      : index == 1
-                          ? ExchangeFragment(key: _exchangeFragmentKey)
-                          : AvailableFragment(
-                              key:
-                                  _availableFragmentKey), // Handle the AvailableFragment
-                );
-              },
+                ),
+                _buildGradientButton(
+                  text: "Exchange",
+                  isSelected: _currentFragment == 1,
+                  onPressed: () {
+                    _pageController.animateToPage(1,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.ease);
+                  },
+                ),
+                _buildGradientButton(
+                  text: "Agents",
+                  isSelected: _currentFragment == 2,
+                  onPressed: () {
+                    _pageController.animateToPage(2,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.ease);
+                  },
+                ),
+              ],
             ),
           ),
         ],

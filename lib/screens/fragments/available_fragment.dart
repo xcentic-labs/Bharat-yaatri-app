@@ -3,6 +3,9 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../cards/ride_card.dart';
 import '../add_ride_screen.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../chat_screen.dart';
 
 class AvailableFragment extends StatefulWidget {
   const AvailableFragment({Key? key}) : super(key: key);
@@ -130,86 +133,153 @@ class AvailableFragmentState extends State<AvailableFragment> {
           ? const Center(child: CircularProgressIndicator())
           : Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                TextField(
-                  controller: _searchController,
-                  style: const TextStyle(color: Colors.black),
-                  cursorColor: Color(0xFFE96E03),
-                  decoration: InputDecoration(
-                    hintText: 'Search by "From" Location...',
-                    hintStyle: const TextStyle(color: Colors.black),
-                    prefixIcon: const Icon(Icons.search, color: Colors.black),
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? IconButton(
-                      icon: const Icon(Icons.clear, color: Colors.black),
-                      onPressed: () {
-                        setState(() {
-                          _searchController.clear();
-                          _filters['from'] = '';  // Clear the filter as well
-                          _suggestedCities = [];  // Optionally clear the suggested cities
-                        });
-                      },
-                    )
-                        : null,
-                    filled: true,
-                    fillColor: Color(0xFFF5F5EE),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.black),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: Color(0xFFE96E03), width: 2),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: Color(0xFFE96E03)),
-                    ),
-                  ),
-                ),
-                if (_suggestedCities.isNotEmpty)
-                  Container(
-                    color: Colors.white,
-                    child: Column(
-                      children: _suggestedCities.map((city) => ListTile(
-                        title: Text(city, style: TextStyle(color: Colors.black)),
-                        onTap: () {
-                          setState(() {
-                            _searchController.text = city;
-                            _filters['from'] = city;
-                            _suggestedCities = [];
-                          });
-                          FocusScope.of(context).unfocus();
-                        },
-                      )).toList(),
-                    ),
-                  ),
-              ],
-            ),
-          ),
           Expanded(
             child: filteredRides.isEmpty
-                ? const Center(child: Text('No rides found!', style: TextStyle(color: Colors.black),))
+                ? const Center(child: Text('No free vehicles found!', style: TextStyle(color: Colors.black),))
                 : ListView.builder(
               padding: const EdgeInsets.only(bottom: 80.0),
               itemCount: filteredRides.length,
               itemBuilder: (context, index) {
                 final ride = filteredRides[index];
-                return RideCard(
-                  carModel: ride['carModel'] ?? 'Unknown Car Model',
-                  createdAt: ride['createdAt'] ?? 'Not Specified',
-                  from: ride['from'] ?? 'Unknown Location',
-                  to: ride['to'] ?? 'Unknown Destination',
-                  carrierType: ride['carrier'] ?? 'Without Carrier',
-                  description: ride['description'] ?? 'No Description Available',
-                  personName: ride['createdByDetails']?['name'] ?? 'Unknown Person',
-                  role: ride['createdByDetails']?['userType'] ?? "Rider",
-                  personPhoneNumber: ride['createdByDetails']?['phoneNumber'] ?? 'Unavailable',
-                );
+                if (ride['rideType'] == 'Available') {
+                  final user = ride['createdByDetails'] ?? {};
+                  return Padding(
+                    padding: index == 0
+                        ? const EdgeInsets.fromLTRB(16, 8, 16, 4)
+                        : const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    child: FreeVehicleCard(
+                      name: user['name'] ?? 'Unknown',
+                      rating: user['rating']?.toString() ?? '4.8',
+                      carType: ride['carModel'] ?? 'Unknown',
+                      avatarUrl: user['profilePhoto']?['imageUrl'],
+                      onChat: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ChatScreen(
+                              userName: user['name'] ?? 'Unknown',
+                              userId: user['_id']?.toString() ?? user['phoneNumber']?.toString() ?? 'Unknown',
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                } else {
+                  return SizedBox.shrink();
+                }
               },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class FreeVehicleCard extends StatelessWidget {
+  final String name;
+  final String rating;
+  final String carType;
+  final String? avatarUrl;
+  final VoidCallback onChat;
+  const FreeVehicleCard({
+    required this.name,
+    required this.rating,
+    required this.carType,
+    this.avatarUrl,
+    required this.onChat,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16.0),
+        border: Border.all(color: Color(0xFFDDDDDD)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.15),
+            blurRadius: 12,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 18, 24, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CircleAvatar(
+                      radius: 28,
+                      backgroundColor: Colors.grey[300],
+                      backgroundImage: (avatarUrl != null && avatarUrl!.isNotEmpty)
+                          ? NetworkImage(avatarUrl!)
+                          : null,
+                      child: (avatarUrl == null || avatarUrl!.isEmpty)
+                          ? Icon(Icons.person, size: 32, color: Colors.white)
+                          : null,
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            name,
+                            style: GoogleFonts.spaceGrotesk(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 18,
+                              color: Color(0xFF002D4C),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Row(
+                            children: [
+                              Icon(Icons.star, color: Colors.amber, size: 16),
+                              const SizedBox(width: 2),
+                              Text(rating, style: TextStyle(fontWeight: FontWeight.w500, fontSize: 13)),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text('Car type: $carType',
+                            style: TextStyle(fontWeight: FontWeight.w400, fontSize: 13, color: Colors.grey[700]),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.bottomRight,
+                  child: SizedBox(
+                    width: 120,
+                    height: 44,
+                    child: ElevatedButton(
+                      onPressed: onChat,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFFFF6B00),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text('Chat', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 18)),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],

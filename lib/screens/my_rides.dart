@@ -62,7 +62,7 @@ class _MyRidesPageState extends State<MyRidesPage> {
         borderRadius: BorderRadius.circular(10),
         child: ListTile(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          tileColor: Color(0xFFE96E03),  // Ensuring the background color is black
+          tileColor: Color(0xFF002D4C),  // Ensuring the background color is black
           leading: CircleAvatar(
             backgroundColor: color,
             child: Icon(icon, color: Colors.black),
@@ -89,11 +89,11 @@ class _MyRidesPageState extends State<MyRidesPage> {
         backgroundColor: Color(0xFFF5F5F5),
         title: const Text(
           'My Rides',
-          style: TextStyle(fontWeight: FontWeight.bold,color: Color(0xFFE96E03), fontSize: 25),
+          style: TextStyle(fontWeight: FontWeight.bold,color: Color(0xFF002D4C), fontSize: 25),
         ),
         centerTitle: true,
         iconTheme: const IconThemeData(
-          color: Color(0xFFE96E03),  // Change back arrow color
+          color: Color(0xFF002D4C),  // Change back arrow color
         ),
       ),
       body: SafeArea(
@@ -210,7 +210,7 @@ class _MyRidesPageState extends State<MyRidesPage> {
           style: TextStyle(color: Colors.white),
         ),
         icon: const Icon(Icons.add, color: Colors.white),
-        backgroundColor: const Color(0xFFE96E03),
+        backgroundColor: const Color(0xFF002D4C),
       ),
     );
   }
@@ -330,7 +330,7 @@ class RideCard extends StatelessWidget {
                             Text(
                               createdAt,
                               style: const TextStyle(
-                                color: Color(0xFFE96E03),
+                                color: Color(0xFF002D4C),
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -355,12 +355,12 @@ class RideCard extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              const Icon(Icons.my_location_outlined, size: 12, color: Color(0xFFE96E03)),
+                              const Icon(Icons.my_location_outlined, size: 12, color: Color(0xFF002D4C)),
                               const SizedBox(width: 3),
                               const Text(
                                 "From",
                                 style: TextStyle(
-                                  color: Color(0xFFE96E03),
+                                  color: Color(0xFF002D4C),
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -377,12 +377,12 @@ class RideCard extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              const Icon(Icons.my_location_outlined, size: 12, color: Color(0xFFE96E03)),
+                              const Icon(Icons.my_location_outlined, size: 12, color: Color(0xFF002D4C)),
                               const SizedBox(width: 3),
                               const Text(
                                 "To",
                                 style: TextStyle(
-                                  color: Color(0xFFE96E03),
+                                  color: Color(0xFF002D4C),
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                 ),

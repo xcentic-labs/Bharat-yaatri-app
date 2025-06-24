@@ -6,6 +6,8 @@ import 'package:cabproject/screens/login.dart';
 import 'package:cabproject/screens/notification/notification.dart';
 import 'package:cabproject/screens/profile_screen.dart';
 import 'package:cabproject/screens/splash_screen.dart';
+import 'package:cabproject/screens/intro_screen.dart';
+import 'package:cabproject/screens/permission_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -231,10 +233,12 @@ class MyApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => const SplashScreen(),
+        '/intro': (context) => const IntroScreen(),
         '/home': (context) => LoginPage(),
         '/main': (context) => BottomNav(),
         '/profileScreen': (context) => ProfileScreen(),
         '/login': (context) => LoginPage(),
+        '/permissionScreen': (context) => const PermissionScreen(),
       },
     );
   }

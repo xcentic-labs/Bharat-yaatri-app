@@ -10,6 +10,12 @@ import 'screens/agent_account_page.dart';
 import 'screens/rider_account_page.dart';
 import 'screens/ride_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/my_booking_screen.dart';
+import 'screens/add_plus_button_screen.dart';
+import 'screens/chat_screen.dart';
+import 'screens/home_screen.dart';
+import 'screens/add_duty_screen.dart';
+import 'screens/add_ride_screen.dart';
 
 class BottomNav extends StatefulWidget {
   @override
@@ -26,40 +32,14 @@ class _BottomNavState extends State<BottomNav> {
   String _userType = 'none';
 
   final FlutterSecureStorage _storage = FlutterSecureStorage();
-
-  static final List<Widget> _screens = <Widget>[
-    RideScreen(),
-    ProfileScreen(),
-  ];
-
-  static const List<BottomNavigationBarItem> _navItems = [
-    BottomNavigationBarItem(
-      icon: Icon(Icons.directions_car),
-      label: "Rides",
-    ),
-    BottomNavigationBarItem(
-      icon: Icon(Icons.person),
-      label: "Profile",
-    ),
-  ];
+  late List<Widget> _screens;
 
   @override
   void initState() {
     super.initState();
-
-    // Get an instance of FirebaseMessaging
-    FirebaseMessaging messaging = FirebaseMessaging.instance;
-
-    // Listen for token refresh
-    messaging.onTokenRefresh.listen((newToken) {
-      _updateToken(newToken);
-    });
-
-    // Other initializations
-    Future.delayed(Duration.zero, () {
-      _getCurrentCity();
-      _fetchUserData();
-    });
+    _initializeScreens();
+    _setupFirebaseMessaging();
+    _initializeData();
 
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.white,
@@ -67,6 +47,249 @@ class _BottomNavState extends State<BottomNav> {
       systemNavigationBarColor: Colors.white,
       systemNavigationBarIconBrightness: Brightness.dark,
     ));
+  }
+
+  void _initializeScreens() {
+    _screens = <Widget>[
+      HomeScreen(),
+      const MyBookingScreen(),
+      ChatScreen(userName: 'Unknown', userId: 'Unknown'),
+      ProfileScreen(),
+    ];
+  }
+
+  void _setupFirebaseMessaging() {
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+    messaging.onTokenRefresh.listen((newToken) {
+      _updateToken(newToken);
+    });
+  }
+
+  void _initializeData() {
+    Future.delayed(Duration.zero, () async {
+      await _getCurrentCity();
+      await _fetchUserData();
+    });
+  }
+
+  void _updateScreens() {
+    setState(() {
+      _screens = <Widget>[
+        HomeScreen(),
+        const MyBookingScreen(),
+        ChatScreen(userName: 'Unknown', userId: 'Unknown'),
+        ProfileScreen(),
+      ];
+    });
+  }
+
+  void _onItemTapped(int index) {
+    if (index == 2) {
+      // Center '+' icon tapped: show Add Ride modal
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        builder: (context) {
+          return SafeArea(
+            child: Container(
+              height: MediaQuery.of(context).size.height * 0.40,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              decoration: const BoxDecoration(
+                color: Color(0xFFF9F9F9),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Title and close button
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Add Ride',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                            fontFamily: 'SpaceGrotesk',
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.close, color: Colors.black),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // Action Buttons
+                  _buildAddRideOption(
+                    icon: Icons.person,
+                    title: 'Need Car/Driver?',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => AddDutyScreen()),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  _buildAddRideOption(
+                    icon: Icons.person_search,
+                    title: 'Need Duty/Customers?',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => AddRideScreen()),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  _buildAddRideOption(
+                    icon: Icons.swap_horiz,
+                    title: 'Exchange Duties',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => AddRideScreen()),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    } else {
+      setState(() {
+        _selectedIndex = index < 2 ? index : index - 1;
+      });
+    }
+  }
+
+  Widget _buildAddRideOption({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: onTap,
+        child: Container(
+          height: 60,
+          decoration: BoxDecoration(
+            color: Color(0xFF002D4C),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            children: [
+              const SizedBox(width: 16),
+              Icon(icon, color: Colors.white, size: 28),
+              const SizedBox(width: 18),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 17,
+                    fontFamily: 'SpaceGrotesk',
+                  ),
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: Colors.white, size: 28),
+              const SizedBox(width: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        body: _screens[_selectedIndex],
+        bottomNavigationBar: BottomNavigationBar(
+          items: <BottomNavigationBarItem>[
+            BottomNavigationBarItem(
+              icon: Image.asset(
+                'assets/home.png',
+                height: 24,
+                width: 24,
+                color: _selectedIndex == 0 ? Color(0xFFFF6B00) : Colors.grey,
+              ),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Image.asset(
+                'assets/bookingicon.png',
+                height: 24,
+                width: 24,
+                color: _selectedIndex == 1 ? Color(0xFFFF6B00) : Colors.grey,
+              ),
+              label: 'My Booking',
+            ),
+            BottomNavigationBarItem(
+              icon: Container(
+                width: 50,
+                height: 50,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Color(0xFF002D4C),
+                ),
+                child: Center(
+                  child: Image.asset(
+                    'assets/plus.png',
+                    height: 24,
+                    width: 24,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              label: '',
+            ),
+            BottomNavigationBarItem(
+              icon: Image.asset(
+                'assets/chat.png',
+                height: 24,
+                width: 24,
+                color: _selectedIndex == 2 ? Color(0xFFFF6B00) : Colors.grey,
+              ),
+              label: 'Chat',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(
+                Icons.person,
+                color: _selectedIndex == 3 ? Color(0xFFFF6B00) : Colors.grey,
+              ),
+              label: 'Profile',
+            ),
+          ],
+          currentIndex: _selectedIndex < 2 ? _selectedIndex : _selectedIndex + 1,
+          selectedItemColor: Color(0xFFFF6B00),
+          unselectedItemColor: Colors.grey,
+          onTap: _onItemTapped,
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: Color(0xFF002D4C),
+          elevation: 0,
+        ),
+      ),
+    );
   }
 
   Future<bool> _onWillPop() async {
@@ -132,29 +355,62 @@ class _BottomNavState extends State<BottomNav> {
                 _name = (data[0]['name']?.split(' ')[0]) ?? 'User';
                 _profileImageUrl =
                     data[0]['profilePhoto']['imageUrl'] ?? 'assets/rider.png';
-                _userType = data[0]['userType'] ??
-                    'none'; // Fetch userType from the response
-                print(_userType);
+                _userType = data[0]['userType'] ?? 'none';
                 _isAlertOn = data[0]['sentNotification'] ?? true;
+
+                // Update _screens list with fetched data
+                _screens = <Widget>[
+                  HomeScreen(),
+                  const MyBookingScreen(),
+                  ChatScreen(userName: 'Unknown', userId: 'Unknown'),
+                  ProfileScreen(),
+                ];
               });
             }
           }
         } else {
-          if (mounted) {
-            setState(() {});
-          }
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to fetch user data')),
-          );
+          // This part shows the snackbar. We will bypass it.
+          // if (mounted) {
+          //   setState(() {});
+          // }
+          // ScaffoldMessenger.of(context).showSnackBar(
+          //   SnackBar(content: Text('Failed to fetch user data')),
+          // );
         }
       }
     } catch (e) {
-      if (mounted) {
-        setState(() {});
+      print('Error fetching user data in bottom_nav: $e');
+      // Also suppress snackbar on exception
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //   SnackBar(content: Text('An error occurred: $e')),
+      // );
+    }
+  }
+
+  Future<void> _updateToken(String newToken) async {
+    final String? userId = await _storage.read(key: 'userId');
+    if (userId != null) {
+      try {
+        final String url =
+            'https://api.bharatyaatri.com/api/user/updateuser/$userId';
+        final response = await http.patch(
+          Uri.parse(url),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: json.encode({
+            'fcmtoken': newToken,
+          }),
+        );
+
+        if (response.statusCode == 200) {
+          print('FCM token updated successfully');
+        } else {
+          print('Failed to update FCM token: ${response.body}');
+        }
+      } catch (e) {
+        print('Error updating FCM token.');
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error fetching data.')),
-      );
     }
   }
 
@@ -197,6 +453,14 @@ class _BottomNavState extends State<BottomNav> {
       if (mounted) {
         setState(() {
           _currentCity = currentCity;
+
+          // Update _screens list with current city for RideScreen
+          _screens = <Widget>[
+            HomeScreen(),
+            const MyBookingScreen(),
+            ChatScreen(userName: 'Unknown', userId: 'Unknown'),
+            ProfileScreen(),
+          ];
         });
       }
 
@@ -228,7 +492,7 @@ class _BottomNavState extends State<BottomNav> {
           );
         }
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         setState(() {
           _currentCity = "Error: ${e.toString()}";
@@ -236,236 +500,5 @@ class _BottomNavState extends State<BottomNav> {
       }
     }
   }
-
-  Future<void> _updateToken(String newToken) async {
-    final String? userId = await _storage.read(key: 'userId');
-    if (userId != null) {
-      final String url =
-          'https://api.bharatyaatri.com/api/user/updateuser/$userId';
-      final response = await http.patch(
-        Uri.parse(url),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({
-          'fcmtoken': newToken,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        print('FCM token refreshed and updated successfully');
-      } else {
-        print('Failed to update refreshed FCM token: ${response.body}');
-      }
-    }
-  }
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
-  IconData _getSelectedIcon(int index) {
-    switch (index) {
-      case 0:
-        return _selectedIndex == 0
-            ? Icons.directions_car
-            : Icons.directions_car_filled_outlined;
-      case 1:
-        return _selectedIndex == 1 ? Icons.person : Icons.person_outline;
-      default:
-        return Icons.home;
-    }
-  }
-
-  void _navigateToAccountPage() {
-    print(_userType);
-    if (_userType == 'RIDER') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => AccountPage()),
-      );
-    } else if (_userType == 'AGENT') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => AgentAccountPage()),
-      );
-    } else if (_userType == 'ADMIN') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => AgentAccountPage()),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Invalid user type')),
-      );
-    }
-  }
-
-  @override
-  @override
-  Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: _onWillPop,
-      child: Scaffold(
-        backgroundColor: Colors.black,
-        appBar: _selectedIndex == 1
-            ? null
-            : PreferredSize(
-                preferredSize: const Size.fromHeight(72),
-                child: AppBar(
-                  automaticallyImplyLeading: false,
-                  elevation: 0,
-                  backgroundColor: Color(0xFFF5F5EE),
-                  flexibleSpace: Container(
-                    margin: const EdgeInsets.only(top: 35),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Row(
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: GestureDetector(
-                                  onTap: () {
-                                    _navigateToAccountPage();
-                                  },
-                                  child: CircleAvatar(
-                                    radius: 24,
-                                    backgroundImage: _profileImageUrl
-                                            .startsWith('profile')
-                                        ? NetworkImage(
-                                            "https://api.bharatyaatri.com/" +
-                                                _profileImageUrl)
-                                        : AssetImage('assets/agent.png')
-                                            as ImageProvider,
-                                  ),
-                                ),
-                              ),
-                              Flexible(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      "Hey $_name!",
-                                      style: const TextStyle(
-                                          fontSize: 18, color: Colors.black),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    Row(
-                                      children: [
-                                        Icon(Icons.circle,
-                                            color: Color(0xFFE96E03), size: 10),
-                                        Flexible(
-                                          child: Text(
-                                            " $_currentCity",
-                                            style: const TextStyle(
-                                                fontSize: 14,
-                                                color: Colors.black),
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(right: 16.0),
-                          child: Row(
-                            children: [
-                              Icon(
-                                _isAlertOn
-                                    ? Icons.notifications_active
-                                    : Icons.notifications_off,
-                                color: const Color(0xFFE96E03),
-                                size: 30,
-                              ),
-                              Switch(
-                                value: _isAlertOn,
-                                onChanged: (value) async {
-                                  setState(() {
-                                    _isAlertOn = value;
-                                  });
-
-                                  final String? userId =
-                                      await _storage.read(key: 'userId');
-                                  if (userId != null) {
-                                    final String url =
-                                        'https://api.bharatyaatri.com/api/user/updateuser/$userId';
-                                    final response = await http.patch(
-                                      Uri.parse(url),
-                                      headers: {
-                                        'Content-Type': 'application/json',
-                                      },
-                                      body: json.encode({
-                                        'sentNotification': _isAlertOn,
-                                      }),
-                                    );
-
-                                    if (response.statusCode == 200) {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                            content: Text(
-                                                'Notification preference updated'),
-                                            duration: Duration(seconds: 1)),
-                                      );
-                                    } else {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                            content: Text(
-                                                'Failed to update notification preference')),
-                                      );
-                                    }
-                                  }
-                                },
-                                activeColor: const Color(0xFFE96E03),
-                                inactiveTrackColor: Colors.white,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-        body: _screens[_selectedIndex],
-        bottomNavigationBar: SafeArea(
-          child: Container(
-            decoration: const BoxDecoration(
-              color: Colors.black,
-            ),
-            child: ClipRRect(
-              child: BottomNavigationBar(
-                items: _navItems.map((item) {
-                  return BottomNavigationBarItem(
-                    icon: Icon(
-                      _getSelectedIcon(_navItems.indexOf(item)),
-                      size: 22,
-                    ),
-                    label: item.label,
-                  );
-                }).toList(),
-                currentIndex: _selectedIndex,
-                selectedItemColor: const Color(0xFFE96E03),
-                unselectedItemColor: const Color(0xFFE96E03),
-                backgroundColor: Color(0xFFF5F5EE),
-                type: BottomNavigationBarType.fixed,
-                onTap: _onItemTapped,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
+

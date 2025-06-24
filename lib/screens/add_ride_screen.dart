@@ -119,7 +119,7 @@ class _AddRideScreenState extends State<AddRideScreen> {
           children: [
             Text(
               label,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFE96E03)),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF002D4C)),
             ),
             const SizedBox(height: 8),
             TextField(
@@ -148,7 +148,7 @@ class _AddRideScreenState extends State<AddRideScreen> {
       children: [
         const Text(
           "Car Model *",
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFE96E03)),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF002D4C)),
         ),
         const SizedBox(height: 10),
         Row(
@@ -223,7 +223,7 @@ class _AddRideScreenState extends State<AddRideScreen> {
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFFE96E03),
+                color: Color(0xFF002D4C),
               ),
             ),
             const SizedBox(height: 8),
@@ -242,7 +242,7 @@ class _AddRideScreenState extends State<AddRideScreen> {
       children: [
         const Text(
           "Lead Type *",
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFE96E03)),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF002D4C)),
         ),
         const SizedBox(height: 10),
         Row(
@@ -263,7 +263,7 @@ class _AddRideScreenState extends State<AddRideScreen> {
       children: [
         const Text(
           "Carrier Type",
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFE96E03)),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF002D4C)),
         ),
         const SizedBox(height: 10),
         Row(
@@ -351,9 +351,9 @@ class _AddRideScreenState extends State<AddRideScreen> {
         centerTitle: true,
         title: const Text(
           "Add Ride",
-          style: TextStyle(color: Color(0xFFE96E03), fontSize: 20, fontWeight: FontWeight.bold),
+          style: TextStyle(color: Color(0xFF002D4C), fontSize: 20, fontWeight: FontWeight.bold),
         ),
-        iconTheme: const IconThemeData(color: Color(0xFFE96E03)),
+        iconTheme: const IconThemeData(color: Color(0xFF002D4C)),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -460,7 +460,7 @@ class _AddRideScreenState extends State<AddRideScreen> {
               ElevatedButton(
                 onPressed: _submitRide,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFE96E03),
+                  backgroundColor: const Color(0xFF002D4C),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),

@@ -3,6 +3,7 @@ import 'package:cabproject/screens/my_rides.dart';
 import 'package:cabproject/screens/rider_account_page.dart';
 import 'package:cabproject/screens/subscription-page.dart';
 import 'package:cabproject/screens/upload_photos.dart';
+import 'package:cabproject/screens/my_account_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -10,6 +11,10 @@ import 'package:http/http.dart' as http;
 import 'agent_account_page.dart';
 import 'login.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:cabproject/screens/privacy_policy_screen.dart';
+import 'manage_drivers_screen.dart';
+import 'manage_vehicles_screen.dart';
 
 
 class ProfileScreen extends StatefulWidget {
@@ -19,10 +24,12 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   User? _user;
-  String _name = 'Guest'; // Default name for guest users
-  String? _profileImageUrl = 'assets/agent.png'; // Default image for guest users
-  String _userType = ''; // Default userType
-  bool _isLoading = true; // Loading state for user data
+  String _name = 'Guest';
+  String? _profileImageUrl = 'assets/agent.png';
+  String _userType = '';
+  String _carType = 'Swift Dzire'; // Placeholder, replace with backend value if available
+  double _rating = 4.8; // Placeholder, replace with backend value if available
+  bool _isLoading = true;
   final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
 
   @override
@@ -32,21 +39,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _fetchUserData() async {
+    print('==== [DEBUG] ProfileScreen: _fetchUserData called ====' );
     try {
       final String? userId = await _secureStorage.read(key: 'userId');
+      print('==== [DEBUG] userId from secure storage: $userId ====' );
       if (userId != null) {
         final String url = 'https://api.bharatyaatri.com/api/user/getuser/$userId';
         final response = await http.get(Uri.parse(url));
-
+        print('==== [DEBUG] HTTP status: ${response.statusCode} ====' );
+        print('==== [DEBUG] User data response: ${response.body} ====' );
         if (response.statusCode == 200) {
           final List<dynamic> data = json.decode(response.body);
           if (data.isNotEmpty) {
             if (mounted) {
               setState(() {
-                _name = (data[0]['name']) ?? 'User';
-                _profileImageUrl = data[0]['profilePhoto']['imageUrl'] ?? 'assets/agent.png';
-                _userType = data[0]['userType'] ?? ''; // Fetch userType from the response
-                _isLoading = false; // Stop loading once data is fetched
+                _name = (data[0]['name'] != null && data[0]['name'].toString().trim().isNotEmpty)
+                    ? data[0]['name']
+                    : 'User';
+                _profileImageUrl = (data[0]['profilePhoto'] != null && data[0]['profilePhoto']['imageUrl'] != null && data[0]['profilePhoto']['imageUrl'].toString().trim().isNotEmpty)
+                    ? data[0]['profilePhoto']['imageUrl']
+                    : 'assets/agent.png';
+                _userType = data[0]['userType'] ?? '';
+                _carType = (data[0]['carType'] != null && data[0]['carType'].toString().trim().isNotEmpty)
+                    ? data[0]['carType']
+                    : 'Swift Dzire';
+                _rating = (data[0]['rating'] != null && data[0]['rating'].toString().trim().isNotEmpty)
+                    ? double.tryParse(data[0]['rating'].toString()) ?? 4.8
+                    : 4.8;
+                _isLoading = false;
               });
             }
           } else {
@@ -61,7 +81,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         } else {
           if (mounted) {
             setState(() {
-              _isLoading = false; // Stop loading on failure
+              _isLoading = false;
             });
           }
           ScaffoldMessenger.of(context).showSnackBar(
@@ -70,9 +90,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         }
       }
     } catch (e) {
+      print('==== [DEBUG] Exception in _fetchUserData: $e ====' );
       if (mounted) {
         setState(() {
-          _isLoading = false; // Stop loading on error
+          _isLoading = false;
         });
       }
       ScaffoldMessenger.of(context).showSnackBar(
@@ -81,10 +102,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // Logout function to remove userId from secure storage and navigate to login screen
   Future<void> _logout() async {
     final bool? confirmLogout = await _showLogoutConfirmationDialog();
-
     if (confirmLogout == true) {
       await _secureStorage.delete(key: "userId");
       Navigator.pushReplacement(
@@ -94,166 +113,82 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-
   Future<bool?> _showLogoutConfirmationDialog() async {
     return showDialog<bool>(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Color(0xFFF5F5F5),
-          title: const Text('Logout Confirmation'),
-          content: const Text('Are you sure you want to log out?'),
-          actions: <Widget>[
+      builder: (context) => AlertDialog(
+        title: Text('Logout'),
+        content: Text('Are you sure you want to logout?'),
+        actions: [
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(false); // User canceled
-              },
-              child: const Text('Cancel', style: TextStyle(color: Colors.black)),
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text('Cancel'),
             ),
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(true); // User confirmed
-              },
-              child: const Text('Logout', style: TextStyle(color: Color(0xFFE96E03))),
-            ),
-          ],
-        );
-      },
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text('Logout'),
+          ),
+        ],
+      ),
     );
   }
 
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Color(0xFFF5F5F5),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Stack(
-              clipBehavior: Clip.none,
-              alignment: Alignment.center,
-              children: [
-                Container(
-                  height: 250,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: AssetImage('assets/banner.png'),
-                      fit: BoxFit.fill,
-                    ),
-                  ),
-                ),
-                Positioned(
-                  bottom: -50,
-                  child: CircleAvatar(
-                    radius: 60,
-                    backgroundColor: Colors.white,
-                    child: CircleAvatar(
-                      radius: 55,
-                      backgroundImage: _profileImageUrl != null
-                          ? (_profileImageUrl!.startsWith('profile')
-                          ? NetworkImage("https://api.bharatyaatri.com/"+_profileImageUrl!)
-                          : AssetImage('assets/agent.png'))
-                          : const AssetImage('assets/agent.png'),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 60),
-            _isLoading
-                ? const CircularProgressIndicator() // Show loading indicator while fetching data
-                : Text(
-              _name,
-              style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold,color: Color(0xFFE96E03)),
-            ),
-            const SizedBox(height: 20),
-            _buildMenuItem(
+  void _navigateToDummyScreen(String title) {
+    Navigator.push(
               context,
-              Icons.person,
-              'My Account',
-              _navigateToAccountPage,
-            ),
-            _buildMenuItem(
-              context,
-              Icons.description,
-              'Documents',
-              _navigateToDocumentPage,
-            ),
-            _buildMenuItem(
-              context,
-              Icons.directions_car,
-              'My Rides',
-              _navigateToRidesPage,
-            ),
-            _buildMenuItem(
-              context,
-              Icons.attach_money,
-              'Subscription',
-              _navigateToSubscriptionPage,
-            ),
-            _buildMenuItem(
-              context,
-              Icons.call,
-              'SOS',
-              _openDialer,
-            ),
-            _buildMenuItem(
-              context,
-              Icons.logout,
-              'Logout',
-              _logout,
-              trailing: Icon(null), // Hide the default arrow icon for logout
-            ),
-          ],
+      MaterialPageRoute(
+        builder: (context) => Scaffold(
+          appBar: AppBar(title: Text(title)),
+          body: Center(child: Text('$title screen coming soon!')),
         ),
       ),
     );
   }
 
-  // Function to navigate to the appropriate account page based on userType
-  void _navigateToAccountPage() {
-    if (_userType == 'RIDER') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => AccountPage()),
-      );
-    } else if (_userType == 'AGENT') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => AgentAccountPage()),
-      );
-    }
-    else if (_userType == 'ADMIN') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => AgentAccountPage()),
-      );
-    }
-     else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Invalid user type')),
-      );
-    }
+  void _navigateToAboutUs() {
+    _navigateToDummyScreen('About Us');
   }
 
-  void _navigateToSubscriptionPage(){
-    Navigator.push(context,
+  void _navigateToPrivacyPolicy() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => PrivacyPolicyScreen()),
+    );
+  }
+
+  void _navigateToPersonalInfo() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => MyAccountScreen()),
+    );
+  }
+
+  void _navigateToManageDrivers() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const ManageDriversScreen()),
+    );
+  }
+
+  void _navigateToManageVehicles() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const ManageVehiclesScreen()),
+    );
+  }
+
+  void _navigateToPaymentMethods() {
+    _navigateToDummyScreen('Payment Methods');
+  }
+
+  void _navigateToSubscriptions() {
+    Navigator.push(
+      context,
       MaterialPageRoute(builder: (context) => SubscriptionPage()),
     );
   }
 
-  void _openDialer() async {
-  const phoneNumber = 'tel:9599232228';
-  if (await canLaunchUrl(Uri.parse(phoneNumber))) {
-    await launchUrl(Uri.parse(phoneNumber));
-  } else {
-    throw 'Could not launch $phoneNumber';
-  }
-}
-
-  void _navigateToDocumentPage() async {
+  void _navigateToDocuments() async {
   final String? userId = await _secureStorage.read(key: 'userId');
   if (userId != null) {
     Navigator.push(
@@ -261,37 +196,335 @@ class _ProfileScreenState extends State<ProfileScreen> {
       MaterialPageRoute(builder: (context) => UploadPhotosPage(userId: userId)),
     );
   } else {
-    print('User ID not found');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('User ID not found.')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Color(0xFFF5F5F5),
+      body: SafeArea(
+        child: _isLoading
+            ? Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _name,
+                                  style: GoogleFonts.spaceGrotesk(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF002B4D),
+                                  ),
+                                ),
+                                Row(
+                                  children: [
+                                    ...List.generate(5, (index) => Icon(
+                                          Icons.star,
+                                          color: index < _rating.round()
+                                              ? Colors.amber
+                                              : Colors.grey.shade300,
+                                          size: 16,
+                                        )),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      _rating.toStringAsFixed(1),
+                                      style: GoogleFonts.manrope(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 2),
+                                Text(
+                                  'Car type: $_carType',
+                                  style: GoogleFonts.manrope(
+                                    fontSize: 12,
+                                    color: Colors.grey[700],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          CircleAvatar(
+                            radius: 22,
+                            backgroundImage: (_profileImageUrl != null && _profileImageUrl!.startsWith('profile'))
+                                ? NetworkImage("https://api.bharatyaatri.com/" + _profileImageUrl!)
+                                : AssetImage(_profileImageUrl ?? 'assets/agent.png') as ImageProvider,
+                            backgroundColor: const Color(0xFF002B4D),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _ProfileActionButton(
+                            assetIcon: 'assets/help.png',
+                            label: 'Help',
+                            onTap: () => _navigateToDummyScreen('Help'),
+                            compact: true,
+                            assetWidth: 35,
+                            assetHeight: 35,
+                          ),
+                          _ProfileActionButton(
+                            assetIcon: 'assets/pastactivity.png',
+                            label: 'Past Activity',
+                            onTap: () => _navigateToDummyScreen('Past Activity'),
+                            compact: true,
+                            assetWidth: 35,
+                            assetHeight: 28,
+                          ),
+                          _ProfileActionButton(
+                            assetIcon: 'assets/Rupees.png',
+                            label: 'Transactions',
+                            onTap: () => _navigateToDummyScreen('Transactions'),
+                            compact: true,
+                            assetWidth: 45,
+                            assetHeight: 45,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                      Text(
+                        'Account',
+                        style: GoogleFonts.manrope(
+                          fontSize: 25,
+                          fontWeight: FontWeight.w700,
+                          height: 1.0,
+                          letterSpacing: 0,
+                          color: const Color(0xFF002B4D),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      _ProfileListTile(
+                        label: 'Personal Information',
+                        onTap: _navigateToPersonalInfo,
+                        textStyle: GoogleFonts.manrope(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                          height: 1.0,
+                          letterSpacing: 0,
+                          color: const Color(0xFF6F6F70),
+                        ),
+                      ),
+                      _ProfileListTile(
+                        label: 'Documents',
+                        onTap: _navigateToDocuments,
+                        textStyle: GoogleFonts.manrope(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                          height: 1.0,
+                          letterSpacing: 0,
+                          color: const Color(0xFF6F6F70),
+                        ),
+                      ),
+                      _ProfileListTile(
+                        label: 'Manage Drivers',
+                        onTap: _navigateToManageDrivers,
+                        textStyle: GoogleFonts.manrope(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                          height: 1.0,
+                          letterSpacing: 0,
+                          color: const Color(0xFF6F6F70),
+                        ),
+                      ),
+                      _ProfileListTile(
+                        label: 'Manage Vehicles',
+                        onTap: _navigateToManageVehicles,
+                        textStyle: GoogleFonts.manrope(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                          height: 1.0,
+                          letterSpacing: 0,
+                          color: const Color(0xFF6F6F70),
+                        ),
+                      ),
+                      _ProfileListTile(
+                        label: 'Payment Methods',
+                        onTap: _navigateToPaymentMethods,
+                        textStyle: GoogleFonts.manrope(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                          height: 1.0,
+                          letterSpacing: 0,
+                          color: const Color(0xFF6F6F70),
+                        ),
+                      ),
+                      _ProfileListTile(
+                        label: 'Subscriptions',
+                        onTap: _navigateToSubscriptions,
+                        textStyle: GoogleFonts.manrope(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                          height: 1.0,
+                          letterSpacing: 0,
+                          color: const Color(0xFF6F6F70),
+                        ),
+                      ),
+                      Container(
+                        margin: const EdgeInsets.symmetric(vertical: 12),
+                        width: double.infinity,
+                        height: 2,
+                        color: Color(0xFFD9D9D9),
+                      ),
+                      Text(
+                        'General',
+                        style: GoogleFonts.manrope(
+                          fontSize: 25,
+                          fontWeight: FontWeight.w700,
+                          height: 1.0,
+                          letterSpacing: 0,
+                          color: Color(0xFF002B4D),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      _ProfileListTile(
+                        label: 'About us',
+                        onTap: _navigateToAboutUs,
+                        textStyle: GoogleFonts.manrope(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                          height: 1.0,
+                          letterSpacing: 0,
+                          color: const Color(0xFF6F6F70),
+                        ),
+                      ),
+                      _ProfileListTile(
+                        label: 'Privacy Policy',
+                        onTap: _navigateToPrivacyPolicy,
+                        textStyle: GoogleFonts.manrope(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                          height: 1.0,
+                          letterSpacing: 0,
+                          color: const Color(0xFF6F6F70),
+                        ),
+                      ),
+                      _ProfileListTile(
+                        label: 'Logout',
+                        onTap: _logout,
+                        color: Colors.redAccent,
+                        textStyle: GoogleFonts.manrope(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                          height: 1.0,
+                          letterSpacing: 0,
+                          color: const Color(0xFF6F6F70),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                  ),
+                ),
+              ),
+      ),
+    );
   }
 }
 
+class _ProfileActionButton extends StatelessWidget {
+  final IconData? icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool compact;
+  final String? assetIcon;
+  final double? assetWidth;
+  final double? assetHeight;
+  const _ProfileActionButton({this.icon, required this.label, required this.onTap, this.compact = false, this.assetIcon, this.assetWidth, this.assetHeight});
 
-  void _navigateToRidesPage(){
-    Navigator.push(context,
-      MaterialPageRoute(builder: (context) => MyRidesPage()),
-    );
-  }
-
-  Widget _buildMenuItem(BuildContext context, IconData icon, String title, VoidCallback onTap, {Widget? trailing}) {
-    return Card(
-      elevation: 0,
-      color: Colors.white,
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Color(0xFFE96E03))
-      ),
-      child: ListTile(
-        leading: Icon(icon, color: const Color(0xFFE96E03)),
-        title: Text(
-          title,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600,color: Colors.black),
-        ),
-        trailing: trailing ?? const Icon(Icons.arrow_forward_ios, size: 18, color: Color(0xFFE96E03)),
-        contentPadding: const EdgeInsets.symmetric(vertical: 5, horizontal: 20),
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
         onTap: onTap,
+        child: Container(
+          width: 125,
+          height: 100,
+          margin: EdgeInsets.symmetric(horizontal: 2),
+          padding: EdgeInsets.symmetric(vertical: compact ? 10 : 16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF3F4F6),
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 4,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (assetIcon != null)
+                SizedBox(
+                  height: 45,
+                  child: Center(
+                    child: Image.asset(assetIcon!, width: assetWidth, height: assetHeight),
+                  ),
+                )
+              else if (icon != null)
+                Icon(icon, color: Color(0xFF002B4D), size: compact ? 22 : 28),
+              SizedBox(height: 8),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.manrope(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  height: 1.0,
+                  letterSpacing: 0.16,
+                  color: const Color(0xFF002B4D),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
+}
 
+class _ProfileListTile extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+  final Color? color;
+  final TextStyle? textStyle;
+  const _ProfileListTile({required this.label, required this.onTap, this.color, this.textStyle});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+      dense: true,
+      minVerticalPadding: 0,
+        title: Text(
+        label,
+        style: textStyle ?? GoogleFonts.manrope(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          color: color ?? Color(0xFF002B4D),
+        ),
+      ),
+      onTap: onTap,
+      trailing: Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey[400]),
+    );
+  }
 }

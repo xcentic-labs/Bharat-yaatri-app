@@ -28,7 +28,6 @@
     <application
         android:label="Bharat Yaatri"
         android:name="${applicationName}"
-        android:icon="@drawable/logo"
         android:allowClearUserData="true"
         android:usesCleartextTraffic="true"
         android:requestLegacyExternalStorage="true">

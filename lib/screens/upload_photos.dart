@@ -29,14 +29,15 @@ class _UploadPhotosPageState extends State<UploadPhotosPage> {
   bool? _aadharVerified;
   bool? _dlVerified;
 
-
   final String baseUrl = "https://api.bharatyaatri.com";
   final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
+  bool _hideHomeInstruction = false;
 
   @override
   void initState() {
     super.initState();
     _fetchUserPhotos();
+    _loadHideHomeInstruction();
   }
 
   Future<void> _fetchUserPhotos() async {
@@ -100,8 +101,12 @@ class _UploadPhotosPageState extends State<UploadPhotosPage> {
     }
   }
 
-
-
+  Future<void> _loadHideHomeInstruction() async {
+    final hide = await _secureStorage.read(key: 'hideHomeInstruction');
+    setState(() {
+      _hideHomeInstruction = hide == 'true';
+    });
+  }
 
   Future<void> _pickImage(Function(File) setImage) async {
     showModalBottomSheet(
@@ -268,6 +273,21 @@ class _UploadPhotosPageState extends State<UploadPhotosPage> {
                 onPressed: _uploadAllPhotos,
                 child: const Text("Upload Photos", style: TextStyle(color: Colors.white)),
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+              ),
+              const SizedBox(height: 12),
+              ElevatedButton(
+                onPressed: () async {
+                  final newValue = !_hideHomeInstruction;
+                  await _secureStorage.write(key: 'hideHomeInstruction', value: newValue ? 'true' : 'false');
+                  setState(() {
+                    _hideHomeInstruction = newValue;
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(newValue ? 'Home screen instructions will be hidden.' : 'Home screen instructions will be shown.')),
+                  );
+                },
+                child: Text(_hideHomeInstruction ? 'Show Home Instructions' : 'Hide Home Instructions', style: const TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.blueGrey),
               ),
             ],
           ),
